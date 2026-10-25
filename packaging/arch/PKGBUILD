@@ -1,0 +1,24 @@
+pkgname=image-slicer
+pkgver=0.2.0
+pkgrel=1
+pkgdesc="Graphical image slicing tool"
+arch=("x86_64")
+depends=("glibc" "gcc-libs")
+source=(
+    "image-slicer"
+    "image-slicer.desktop"
+)
+sha256sums=(
+    "SKIP"
+    "SKIP"
+)
+
+package() {
+    install -Dm755 \
+        "$srcdir/image-slicer" \
+        "$pkgdir/usr/bin/image-slicer"
+
+    install -Dm644 \
+        "$srcdir/image-slicer.desktop" \
+        "$pkgdir/usr/share/applications/image-slicer.desktop"
+}

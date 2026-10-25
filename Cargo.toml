@@ -1,0 +1,9 @@
+[package]
+name = "image_slicer"
+version = "0.2.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.34"
+egui-file-dialog = "0.13"
+image = "0.25"

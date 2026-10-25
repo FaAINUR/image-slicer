@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Image Slicer
+Comment=Split images into tiles
+Comment[ru]=Нарезка изображений на части
+Exec=image-slicer
+Icon=image-x-generic
+Terminal=false
+Categories=Graphics;Utility;
+StartupNotify=true
