@@ -167,7 +167,7 @@ mod tests {
 
     #[test]
     fn plan_tiles_splits_image_into_cells() {
-        let plans = plan_tiles(100, 100, [32, 32], plan_tiles(100, 100, [32, 32], plan_tiles(100, 100, [32, 32], plan_tiles(100, 100, [32, 32], &[])[], &[])[], &[])[], &[]).unwrap();
+        let plans = plan_tiles(100, 100, [32, 32], &[], &[]).unwrap();
 
         assert_eq!(plans.len(), 16);
 
@@ -233,7 +233,7 @@ mod tests {
 
     #[test]
     fn plan_tiles_rejects_zero_tile_size() {
-        let error = plan_tiles(32, 32, [0, 32], plan_tiles(32, 32, [0, 32], plan_tiles(32, 32, [0, 32], &[])[], &[])[], &[]).unwrap_err();
+        let error = plan_tiles(32, 32, [0, 32], &[], &[]).unwrap_err();
 
         assert_eq!(error, "Размер клетки должен быть больше нуля.");
     }
