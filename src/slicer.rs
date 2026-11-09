@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use image::RgbaImage;
 
-use crate::grid::MergedArea;
+use crate::grid::{Cell, MergedArea};
 
 pub type SaveResult = Result<(u64, PathBuf), String>;
 
@@ -25,6 +25,7 @@ pub fn plan_tiles(
     height: u32,
     tile_size: [u32; 2],
     merged: &[MergedArea],
+    only_selected: &[Cell],
 ) -> Result<Vec<TilePlan>, String> {
     let [tile_width, tile_height] = tile_size;
 
@@ -38,12 +39,27 @@ pub fn plan_tiles(
 
     let columns = width.div_ceil(tile_width);
     let rows = height.div_ceil(tile_height);
+    let selected: std::collections::BTreeSet<Cell> = only_selected.iter().copied().collect();
     let mut plans = Vec::new();
 
     for row in 0..rows {
         for column in 0..columns {
             let cell = (column, row);
             let group = merged.iter().find(|area| area.contains(cell));
+
+            if !selected.is_empty() {
+                let selected_area = group.filter(|area| {
+                    selected
+                        .iter()
+                        .any(|selected_cell| area.contains(*selected_cell))
+                });
+
+                let is_selected = selected.contains(&cell) || selected_area.is_some();
+
+                if !is_selected {
+                    continue;
+                }
+            }
 
             let (right, bottom, merged) = if let Some(area) = group {
                 // Объединённую область добавляем в план только один раз.
@@ -100,12 +116,14 @@ pub fn save_tiles(
     output: &Path,
     tile_size: [u32; 2],
     merged: &[MergedArea],
+    only_selected: &[Cell],
 ) -> SaveResult {
     let plans = plan_tiles(
         image.width(),
         image.height(),
         tile_size,
         merged,
+        only_selected,
     )?;
 
     let folder = create_output_folder(output)?;
@@ -149,7 +167,7 @@ mod tests {
 
     #[test]
     fn plan_tiles_splits_image_into_cells() {
-        let plans = plan_tiles(100, 100, [32, 32], &[]).unwrap();
+        let plans = plan_tiles(100, 100, [32, 32], plan_tiles(100, 100, [32, 32], plan_tiles(100, 100, [32, 32], plan_tiles(100, 100, [32, 32], &[])[], &[])[], &[])[], &[]).unwrap();
 
         assert_eq!(plans.len(), 16);
 
@@ -170,7 +188,7 @@ mod tests {
             bottom: 1,
         }];
 
-        let plans = plan_tiles(96, 96, [32, 32], &merged).unwrap();
+        let plans = plan_tiles(96, 96, [32, 32], &merged, &[]).unwrap();
 
         assert_eq!(plans.len(), 6);
 
@@ -186,8 +204,36 @@ mod tests {
     }
 
     #[test]
+    fn plan_tiles_keeps_only_selected_cells() {
+        let selected = [(0, 0), (2, 2)];
+
+        let plans = plan_tiles(96, 96, [32, 32], &[], &selected).unwrap();
+
+        assert_eq!(plans.len(), 2);
+        assert!(plans.iter().all(|plan| !plan.merged));
+    }
+
+    #[test]
+    fn plan_tiles_keeps_merged_area_with_selected_cell() {
+        let merged = [MergedArea {
+            left: 0,
+            top: 0,
+            right: 1,
+            bottom: 1,
+        }];
+        let selected = [(1, 1)];
+
+        let plans = plan_tiles(96, 96, [32, 32], &merged, &selected).unwrap();
+
+        assert_eq!(plans.len(), 1);
+        assert!(plans[0].merged);
+        assert_eq!(plans[0].width, 64);
+        assert_eq!(plans[0].height, 64);
+    }
+
+    #[test]
     fn plan_tiles_rejects_zero_tile_size() {
-        let error = plan_tiles(32, 32, [0, 32], &[]).unwrap_err();
+        let error = plan_tiles(32, 32, [0, 32], plan_tiles(32, 32, [0, 32], plan_tiles(32, 32, [0, 32], &[])[], &[])[], &[]).unwrap_err();
 
         assert_eq!(error, "Размер клетки должен быть больше нуля.");
     }

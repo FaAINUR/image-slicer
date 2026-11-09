@@ -57,6 +57,7 @@ struct ImageSlicerApp {
     zoom: f32,
     show_grid: bool,
     checkerboard: bool,
+    slice_selection_only: bool,
 
     selected: BTreeSet<Cell>,
     merged: Vec<MergedArea>,
@@ -85,6 +86,7 @@ impl Default for ImageSlicerApp {
             zoom: 1.0,
             show_grid: true,
             checkerboard: true,
+            slice_selection_only: false,
 
             selected: BTreeSet::new(),
             merged: Vec::new(),
@@ -288,6 +290,7 @@ impl ImageSlicerApp {
 
         ui.checkbox(&mut self.show_grid, "Показывать границы");
         ui.checkbox(&mut self.checkerboard, "Шахматный фон");
+        ui.checkbox(&mut self.slice_selection_only, "Резать только выбранное");
 
         if let Some([tw, th]) = self.tile_size() {
             if self.source.is_some() {
@@ -323,6 +326,7 @@ impl ImageSlicerApp {
             self.start_save();
         }
 
+        ui.weak("При включённом режиме сохраняются только выбранные клетки и объединённые области, содержащие выбранную клетку.");
         ui.weak("Перед сохранением нажми «Объединить»: жёлтое выделение само по себе не объединяет клетки.");
         ui.weak("Рамки и фон в PNG не сохраняются.");
         ui.weak("Объединения действуют только в текущем сеансе.");
@@ -669,13 +673,19 @@ impl ImageSlicerApp {
         });
 
         let merged = self.merged.clone();
+        let only_selected = if self.slice_selection_only {
+            self.selected.iter().copied().collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
         let (sender, receiver) = mpsc::channel();
 
         self.save_receiver = Some(receiver);
         self.status = "Сохраняю PNG с учётом объединений...".into();
 
         std::thread::spawn(move || {
-            let result = save_tiles(&image, &output, tile_size, &merged);
+            let result =
+                save_tiles(&image, &output, tile_size, &merged, &only_selected);
             let _ = sender.send(result);
         });
     }
