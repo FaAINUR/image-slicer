@@ -559,7 +559,7 @@ impl ImageSlicerApp {
                                 cell_rect,
                                 0.0,
                                 egui::Stroke::new(
-                                    2.0,
+                                    2.0_f32,
                                     if selected {
                                         egui::Color32::YELLOW
                                     } else {
@@ -594,7 +594,7 @@ impl ImageSlicerApp {
                             merged_rect,
                             0.0,
                             egui::Stroke::new(
-                                if active { 4.0 } else { 2.0 },
+                                if active { 4.0_f32 } else { 2.0_f32 },
                                 egui::Color32::from_rgb(40, 170, 255),
                             ),
                             egui::StrokeKind::Inside,
