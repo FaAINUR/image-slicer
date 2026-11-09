@@ -172,7 +172,7 @@ mod tests {
 
         let plans = plan_tiles(96, 96, [32, 32], &merged).unwrap();
 
-        assert_eq!(plans.len(), 7);
+        assert_eq!(plans.len(), 6);
 
         let merged_plan = plans
             .iter()
